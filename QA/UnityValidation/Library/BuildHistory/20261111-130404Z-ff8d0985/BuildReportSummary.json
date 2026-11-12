@@ -1,0 +1,33 @@
+{
+    "Version": 2,
+    "BuildContentOptions": [
+        "None"
+    ],
+    "BuildManifestHash": "00000000000000000000000000000000",
+    "BuildName": "Revolver MVP",
+    "BuildOptions": [
+        "ForceOptimizeScriptCompilation",
+        "Il2CPP",
+        "CompressTextures",
+        "StripDebugSymbols",
+        "ShaderLivelinkSupport",
+        "Development"
+    ],
+    "BuildProfilePath": "",
+    "BuildResult": 1,
+    "BuildResultName": "Succeeded",
+    "BuildSessionGUID": "ff8d098520039c943864b3d9061e660b",
+    "BuildStartedAt": "2026-11-11T13:04:04.2504528Z",
+    "BuildType": 1,
+    "BuildTypeName": "Player",
+    "ContentSourceBuildSessionGUID": "02327520c40f71d47bea6c9ae5b3a8a6",
+    "OutputPath": "D:/Game Dev/RevolverMVP/QA/UnityValidation/Build/TheLastKing/TheLastKing.exe",
+    "Platform": 19,
+    "PlatformName": "StandaloneWindows64",
+    "Subtarget": 2,
+    "SubtargetName": "Player",
+    "TotalErrors": 0,
+    "TotalSizeBytes": 195248820,
+    "TotalTimeMs": 6992,
+    "TotalWarnings": 0
+}

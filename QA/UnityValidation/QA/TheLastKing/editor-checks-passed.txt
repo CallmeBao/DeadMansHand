@@ -1,0 +1,2 @@
+PASS: The Last King v1.1 — 35331 assertions. 1500 deterministic random-bot games: 5–10 turns, mean 7.48; endings blood=1500, collapse=0, empty=0. This checks consistency, not strategic balance. All pairings, role transfers, blood tax, lethal priority, draw priority, card conservation, terminal states and AI snapshot isolation passed.
+PASS: serialized scene references, Canvas, scale rig and four prefabs.

@@ -1,0 +1,2 @@
+Updated 42 serialized UI labels to Roboto Bold; Vietnamese glyphs verified.
+Assets/TheLastKing/Scenes/LastKingTable.unity

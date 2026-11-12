@@ -1,0 +1,5 @@
+FAIL: InvalidOperationException: LAST KING PHYSICS CHECK FAILED: fall recovery returns coin without emitting deposit
+TheLastKing.LastKingPhysicsChecks.Require (System.Boolean condition, System.String message) (at D:/Game Dev/RevolverMVP/QA/UnityValidation/Assets/TheLastKing/Scripts/LastKingPhysicsChecks.cs:182)
+TheLastKing.LastKingPhysicsChecks+<Run>d__0.MoveNext () (at D:/Game Dev/RevolverMVP/QA/UnityValidation/Assets/TheLastKing/Scripts/LastKingPhysicsChecks.cs:70)
+UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+UnityEngine.StackTraceUtility:ExtractStringFromExceptionInternal(Object, String&, String&) (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:50)
