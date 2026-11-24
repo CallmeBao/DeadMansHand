@@ -38,7 +38,7 @@ Scene và prefab đã được lưu dưới dạng asset. Sửa trực tiếp ch
 
 ## Làm việc nhóm
 
-Cả ba dùng cùng phiên bản Unity. Khi đưa vào Git, commit `Assets` (gồm tất cả `.meta`), `Packages`, `ProjectSettings`; bỏ qua `Library`, `Temp`, `Logs`, `obj`, `Build` và `QA/UnityValidation`. Không xóa/đổi `.meta` vì scene dùng GUID để tham chiếu asset. Phân công tránh sửa cùng scene một lúc: một người UI/scene, một người luật/AI, một người art/âm thanh/physics prefab. Đây là bản chơi offline với AI, chưa có multiplayer qua mạng.
+Cả ba dùng cùng phiên bản Unity. Khi đưa vào Git, commit `Assets` (gồm tất cả `.meta`), `Packages`, `ProjectSettings`; bỏ qua `Library`, `Temp`, `Logs`, `obj`, `Build` và `QA/UnityValidation`. Không xóa/đổi `.meta` vì scene dùng GUID để tham chiếu asset. Phân công tránh sửa cùng scene một lúc: một người UI/scene, một người luật/AI, một người art/âm thanh/physics prefab. Chế độ chính là chơi với AI; **chơi online hai người (PvP)** qua máy chủ độc lập được mô tả ở mục dưới.
 
 ## Kiểm tra và build
 
@@ -47,3 +47,18 @@ Menu **DeadMansHand > Run Checks** kiểm tra các nhánh luật và tính toàn
 Đổi tên hiển thị: chọn `HUD Canvas/Header/Title` và `HUD Canvas/Start Panel/Welcome Title`, sửa trường **Text** trong Inspector. Đổi tên ứng dụng tại **Edit > Project Settings > Player > Product Name**. Công cụ tạo/build scene dùng hằng `GameTitle` trong `Assets/TheLastKing/Editor/LastKingSetup.cs`.
 
 Art mới là hình tạo bằng công cụ image generation, không phải asset mua từ Unity Asset Store. Xem `ASSET_PROVENANCE.md` để biết nguồn và nội dung yêu cầu tạo hình. Nhân vật có hai cổ tay tự do để có thể chơi bài.
+
+## Chơi online (PvP)
+
+Có nút **CHƠI ONLINE (PvP)** trên màn hình chính (tự gắn vào scene lúc chạy, không cần sửa scene). Cần một máy chủ đang chạy:
+
+```
+scripts\run-server.bat            (Windows; cần .NET 8 Runtime)   |   scripts/run-server.sh
+```
+
+Trong game: CHƠI ONLINE → nhập `IP:cổng` (mặc định `127.0.0.1:7777`) → Kết nối → Tạo phòng / nhập mã phòng → cả hai bấm SẴN SÀNG. Thử một mình: chạy bot đối thủ bằng `scripts/run-online-tests.sh bot --join MÃ` (xem `docs/ONLINE_PVP_README.md`).
+
+- Cách chạy/triển khai: `docs/ONLINE_PVP_README.md`
+- Kiểm tra tự động không cần Unity: `scripts/run-all-checks.sh` (biên dịch bằng stub + bộ test mạng + mô phỏng keo dán Unity).
+- Trong Unity: menu **DeadMansHand > Online > Run Protocol Checks**.
+- Tắt hẳn tính năng: thêm `LASTKING_NO_ONLINE` vào Scripting Define Symbols.

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Kiểm tra BIÊN DỊCH (không phải chạy) mã Unity của The Last King bằng bộ stub UnityEngine tối thiểu.
+    Mục đích: bắt lỗi cú pháp/kiểu/API sai TRƯỚC KHI mở Unity. Stub chỉ là bản sao chữ ký các API mà dự án dùng;
+    biên dịch thành công ở đây KHÔNG thay thế việc build trong Unity thật. Xem README.md cùng thư mục.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>LastKing.UnityCompileCheck</AssemblyName>
+    <DefineConstants>$(DefineConstants);UNITY_EDITOR</DefineConstants>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="UnityEngine.Stub.cs" />
+    <Compile Include="../../Assets/TheLastKing/Scripts/**/*.cs" />
+    <Compile Include="../../Assets/TheLastKing/Net/**/*.cs" />
+    <Compile Include="../../Assets/TheLastKing/Editor/LastKingNetChecks.cs" Condition="Exists('../../Assets/TheLastKing/Editor/LastKingNetChecks.cs')" />
+  </ItemGroup>
+</Project>

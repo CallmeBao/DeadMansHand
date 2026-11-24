@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Bộ kiểm thử Online PvP: chạy MÁY CHỦ THẬT và CLIENT THẬT (cùng mã OnlineClient mà Unity dùng) qua socket loopback.
+    Không dùng gói NuGet nào (tự có bộ khẳng định trong Harness.cs) nên chạy được cả khi không có mạng.
+    Chạy bằng scripts/run-online-tests.sh (hoặc .bat). Thêm tên nhóm phía sau để lọc, ví dụ: tls, resilience.
+    Lệnh "bot" biến chương trình này thành đối thủ tự động để thử client Unity (xem docs/ONLINE_PVP_README.md).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>OnlineTests</AssemblyName>
+    <RootNamespace>TheLastKing.Tests</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <NoWarn>CS0618</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="*.cs" />
+    <!-- Mã dùng chung với Unity: biên dịch trực tiếp, không sao chép -->
+    <Compile Include="../../Assets/TheLastKing/Scripts/LastKingRules.cs" Link="Shared/LastKingRules.cs" />
+    <Compile Include="../../Assets/TheLastKing/Editor/LastKingRuleChecks.cs" Link="Shared/LastKingRuleChecks.cs" />
+    <Compile Include="../../Assets/TheLastKing/Editor/LastKingNetChecks.cs" Link="Shared/LastKingNetChecks.cs" />
+    <Compile Include="../../Assets/TheLastKing/Net/**/*.cs" Link="Shared/Net/%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- Máy chủ chạy trong cùng tiến trình khi kiểm thử -->
+    <Compile Include="../../Server/GameServer.cs" Link="Server/GameServer.cs" />
+    <Compile Include="../../Server/Room.cs" Link="Server/Room.cs" />
+    <Compile Include="../../Server/CertificateFactory.cs" Link="Server/CertificateFactory.cs" />
+  </ItemGroup>
+</Project>

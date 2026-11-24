@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace TheLastKing
 {
     /// <summary>Connects the serialized Canvas, scene assets, rules and physical coin interaction.</summary>
-    public sealed class LastKingGameController : MonoBehaviour
+    public sealed partial class LastKingGameController : MonoBehaviour
     {
         public LastKingPhysics Physics;
         public Camera WorldCamera;
@@ -34,7 +34,7 @@ namespace TheLastKing
         [Min(.3f)] public float RevealSeconds = 2.6f;
         public bool SoundEnabled = true;
 
-        enum Stage { Welcome, Choosing, Revealing, Depositing, Ending, Finished }
+        enum Stage { Welcome, Choosing, Revealing, Depositing, Ending, Finished, Locked, Waiting }   // Locked/Waiting chỉ dùng ở chế độ online
         Stage stage;
         LastKingMatch match;
         readonly System.Random random = new System.Random();
@@ -90,6 +90,7 @@ namespace TheLastKing
 
         public void NewMatch()
         {
+            if (online) { OnlineRematch(); return; }
             StopAllCoroutines();
             BeginMatch();
         }
@@ -124,6 +125,7 @@ namespace TheLastKing
 
         void Update()
         {
+            if (online || pendingOnline.Count > 0) { OnlineUpdate(); if (online) return; }
             if (Input.GetKeyDown(KeyCode.Escape)) TogglePause();
             if (paused) return;
             if (stage == Stage.Choosing)
@@ -161,12 +163,14 @@ namespace TheLastKing
 
         public void SelectCard(int index)
         {
+            if (online) { OnlineSelectCard(index); return; }
             if (paused || stage != Stage.Choosing || index < 0 || index >= match.State.Players[0].Hand.Count) return;
             selected = index; Play(SelectSound); UpdateControls();
         }
 
         public void LockSelection()
         {
+            if (online) { OnlineLock(); return; }
             if (paused || stage != Stage.Choosing || selected < 0) return;
             stage = Stage.Revealing;
             TurnResult result = match.ResolveTurn(selected, aiChoice);
@@ -179,14 +183,14 @@ namespace TheLastKing
             RenderState(result.Before);
             SetText(TurnText, "LƯỢT " + result.After.TurnIndex);
             SetActive(RevealPanel, true);
-            PlayerReveal.sprite = CardSprites[(int)result.PlayedCards[0].Kind];
-            OpponentReveal.sprite = CardSprites[(int)result.PlayedCards[1].Kind];
+            PlayerReveal.sprite = CardSprites[(int)result.PlayedCards[Me].Kind];
+            OpponentReveal.sprite = CardSprites[(int)result.PlayedCards[Opp].Kind];
             string message = Describe(result);
             SetText(RevealText, message);
-            SetText(StatusText, result.PairWinnerSeat == 0 ? "BẠN THẮNG LƯỢT" : result.PairWinnerSeat == 1 ? "AI THẮNG LƯỢT" : "HAI LÁ HÒA NHAU");
+            SetText(StatusText, result.PairWinnerSeat == Me ? "BẠN THẮNG LƯỢT" : result.PairWinnerSeat == Opp ? OpponentLabel + " THẮNG LƯỢT" : "HAI LÁ HÒA NHAU");
             Play(RevealSound);
             yield return new WaitForSeconds(RevealSeconds);
-            history.Add("L" + result.After.TurnIndex + "   " + CardName(result.PlayedCards[0].Kind) + " / " + CardName(result.PlayedCards[1].Kind) +
+            history.Add("L" + result.After.TurnIndex + "   " + CardName(result.PlayedCards[Me].Kind) + " / " + CardName(result.PlayedCards[Opp].Kind) +
                 (result.CoinRecipientSeat < 0 ? "  ·  không xu" : "  ·  +1 xu " + SeatName(result.CoinRecipientSeat)));
             if (history.Count > 4) history.RemoveAt(0);
             RenderState(result.After);
@@ -196,18 +200,19 @@ namespace TheLastKing
             {
                 stage = Stage.Depositing; coinDeposited = false;
                 SetActive(RevealPanel, false);
-                int owner = result.CoinRecipientSeat;
-                SetActive(AutoPlaceButton.gameObject, owner == 0);
+                int owner = result.CoinRecipientSeat;         // ghế luật của người nhận xu (dùng để đọc dữ liệu)
+                int pan = ViewSeat(owner);                    // đĩa cân vật lý: 0 = bên trái = người chơi tại máy này
+                SetActive(AutoPlaceButton.gameObject, pan == 0);
                 SetActive(DepositHint.gameObject, true);
-                SetText(DepositHint, owner == 0 ? "BỐC XU · THẢ VÀO ĐĨA BÊN TRÁI\nGiữ chuột trái để nhấc · Thả chuột để buông" : "AI đang đặt Xu Máu lên đĩa bên phải…");
-                if (!Physics.StartCoin(owner, result.After.Players[owner].BloodCoins))
+                SetText(DepositHint, pan == 0 ? "BỐC XU · THẢ VÀO ĐĨA BÊN TRÁI\nGiữ chuột trái để nhấc · Thả chuột để buông" : OpponentLabel + " đang đặt Xu Máu lên đĩa bên phải…");
+                if (!Physics.StartCoin(pan, result.After.Players[owner].BloodCoins))
                     throw new InvalidOperationException("A resolved Blood Coin could not enter the physical placement phase.");
                 UpdateControls();
                 float waiting = 0; bool helped = false;
                 while (!coinDeposited)
                 {
                     waiting += Time.deltaTime;
-                    if (!helped && ((owner == 1 && waiting > 1.1f) || (smoke && waiting > .3f) || waiting > 24))
+                    if (!helped && ((pan == 1 && waiting > 1.1f) || (smoke && waiting > .3f) || waiting > 24))
                     { Physics.AutoPlace(); helped = true; }
                     if (waiting > 40) throw new TimeoutException("Coin placement did not complete.");
                     yield return null;
@@ -216,6 +221,7 @@ namespace TheLastKing
                 SetActive(DepositHint.gameObject, false);
                 yield return new WaitForSeconds(.5f);
             }
+            if (online) { yield return OnlinePresentationDone(result); yield break; }
             if (result.After.IsFinished) yield return EndMatch();
             else BeginTurn();
         }
@@ -230,7 +236,7 @@ namespace TheLastKing
             if (!match.State.IsDraw)
             {
                 Play(EndSound);
-                bool opponentLost = match.State.WinnerSeat == 0;
+                bool opponentLost = match.State.WinnerSeat == Me;
                 float elapsed = 0;
                 while (elapsed < 1.7f)
                 {
@@ -249,35 +255,36 @@ namespace TheLastKing
                 SetFlash(0, gold);
             }
             stage = Stage.Finished;
-            SetText(EndTitle, match.State.IsDraw ? "KHÔNG AI LÊN NGÔI" : match.State.WinnerSeat == 0 ? "BẠN LÀ VUA CUỐI CÙNG" : "NGÔI VUA ĐÃ ĐỔI CHỦ");
-            SetText(EndReasonText, EndDescription(match.State) + "\n\n" + match.State.TurnIndex + " lượt đấu  ·  Xu Máu: Bạn " + match.State.Players[0].BloodCoins + " — AI " + match.State.Players[1].BloodCoins);
+            SetText(EndTitle, match.State.IsDraw ? "KHÔNG AI LÊN NGÔI" : match.State.WinnerSeat == Me ? "BẠN LÀ VUA CUỐI CÙNG" : "NGÔI VUA ĐÃ ĐỔI CHỦ");
+            SetText(EndReasonText, EndDescription(match.State) + "\n\n" + match.State.TurnIndex + " lượt đấu  ·  Xu Máu: Bạn " + match.State.Players[Me].BloodCoins + " — " + OpponentLabel + " " + match.State.Players[Opp].BloodCoins);
             SetActive(EndPanel, true); UpdateControls();
+            if (online) OnlineEndScreenShown();
         }
 
         void RenderState(MatchState state)
         {
             SetText(TurnText, "LƯỢT " + (state.IsFinished ? state.TurnIndex : state.TurnIndex + 1));
-            SetText(PlayerHandText, "BẠN\n" + CountHand(state.Players[0]));
-            SetText(OpponentHandText, "ĐỐI THỦ\n" + CountHand(state.Players[1]));
-            SetText(PlayerCoinText, "BẠN:  " + state.Players[0].BloodCoins + " / 5 XU MÁU");
-            SetText(OpponentCoinText, "AI:  " + state.Players[1].BloodCoins + " / 5 XU MÁU");
-            SetText(PlayerBpmText, "BẠN: " + (70 + state.Players[0].BloodCoins * 16) + " BPM");
-            SetText(OpponentBpmText, "AI: " + (70 + state.Players[1].BloodCoins * 16) + " BPM");
+            SetText(PlayerHandText, "BẠN\n" + CountHand(state.Players[Me]));
+            SetText(OpponentHandText, "ĐỐI THỦ\n" + CountHand(state.Players[Opp]));
+            SetText(PlayerCoinText, "BẠN:  " + state.Players[Me].BloodCoins + " / 5 XU MÁU");
+            SetText(OpponentCoinText, OpponentLabel + ":  " + state.Players[Opp].BloodCoins + " / 5 XU MÁU");
+            SetText(PlayerBpmText, "BẠN: " + (70 + state.Players[Me].BloodCoins * 16) + " BPM");
+            SetText(OpponentBpmText, OpponentLabel + ": " + (70 + state.Players[Opp].BloodCoins * 16) + " BPM");
             SetText(DeckText, "DÂN TRONG XẤP: " + state.DeckCount + "\nĐÃ TIÊU HỦY: " + state.DestroyedCount);
-            SetText(InitiativeText, "ƯU TIÊN RÚT CUỐI: " + (state.InitiativeSeat == 0 ? "BẠN" : "AI"));
+            SetText(InitiativeText, "ƯU TIÊN RÚT CUỐI: " + (state.InitiativeSeat == Me ? "BẠN" : OpponentLabel));
             SetText(HistoryText, history.Count == 0 ? "Lịch sử lượt sẽ hiện tại đây." : string.Join("\n", history.ToArray()));
             for (int i = 0; i < CardButtons.Length; i++)
             {
-                bool present = i < state.Players[0].Hand.Count;
+                bool present = i < state.Players[Me].Hand.Count;
                 CardButtons[i].gameObject.SetActive(present);
                 if (!present) continue;
-                CardKind kind = state.Players[0].Hand[i].Kind;
+                CardKind kind = state.Players[Me].Hand[i].Kind;
                 CardImages[i].sprite = CardSprites[(int)kind];
                 CardImages[i].preserveAspect = true;
                 SetText(CardLabels[i], (i + 1) + "  ·  " + CardName(kind));
             }
-            if (PlayerCoinText) PlayerCoinText.color = state.Players[0].BloodCoins >= 4 ? blood : cream;
-            if (OpponentCoinText) OpponentCoinText.color = state.Players[1].BloodCoins >= 4 ? blood : cream;
+            if (PlayerCoinText) PlayerCoinText.color = state.Players[Me].BloodCoins >= 4 ? blood : cream;
+            if (OpponentCoinText) OpponentCoinText.color = state.Players[Opp].BloodCoins >= 4 ? blood : cream;
             UpdateControls();
         }
 
@@ -286,17 +293,18 @@ namespace TheLastKing
             bool choosing = stage == Stage.Choosing && !paused;
             for (int i = 0; i < CardButtons.Length; i++)
             {
-                CardButtons[i].interactable = choosing;
-                if (i < SelectionMarks.Length && SelectionMarks[i]) SelectionMarks[i].SetActive(choosing && selected == i);
+                CardButtons[i].interactable = choosing && !lockPending;
+                if (i < SelectionMarks.Length && SelectionMarks[i]) SelectionMarks[i].SetActive((choosing || stage == Stage.Locked) && selected == i);
             }
-            LockButton.interactable = choosing && selected >= 0;
-            SetText(LockButtonText, "KHÓA BÀI\n<size=15>ENTER / SPACE</size>");
+            LockButton.interactable = choosing && selected >= 0 && !lockPending;
+            SetText(LockButtonText, LockCaption());
             PauseButton.interactable = stage != Stage.Welcome;
         }
 
         void TogglePause()
         {
             if (stage == Stage.Welcome) return;
+            if (online) { OnlineToggleMenu(); return; }
             paused = !paused; Time.timeScale = paused ? 0 : 1;
             SetActive(PausePanel, paused); UpdateControls();
         }
@@ -306,9 +314,9 @@ namespace TheLastKing
             int[] counts = new int[3]; foreach (Card c in player.Hand) counts[(int)c.Kind]++;
             return counts[0] + " VUA  ·  " + counts[1] + " DÂN  ·  " + counts[2] + " NÔ LỆ";
         }
-        static string SeatName(int seat) { return seat == 0 ? "BẠN" : "AI"; }
+        string SeatName(int seat) { return seat == Me ? "BẠN" : OpponentLabel; }
         public static string CardName(CardKind kind) { return kind == CardKind.King ? "VUA" : kind == CardKind.Citizen ? "DÂN" : "NÔ LỆ"; }
-        static string Describe(TurnResult r)
+        string Describe(TurnResult r)
         {
             CardKind a = r.PlayedCards[0].Kind, b = r.PlayedCards[1].Kind;
             if (r.After.IsFinished && r.After.EndReason == MatchEndReason.BloodCoins)
@@ -322,10 +330,10 @@ namespace TheLastKing
             string consequence = winning == CardKind.King ? "Dân thua chuyển thành Nô lệ." : winning == CardKind.Slave ? "Nô lệ thành Vua; Vua cũ bị tiêu hủy." : "Nô lệ bị tiêu hủy; Dân trở về tay.";
             return SeatName(r.CoinRecipientSeat) + " nhận 1 Xu Máu. " + consequence;
         }
-        static string EndDescription(MatchState state)
+        string EndDescription(MatchState state)
         {
             if (state.IsDraw) return "Không xác định người thắng. Cả hai được giữ lại cho một ván khác.";
-            string loser = state.WinnerSeat == 0 ? "AI" : "Bạn";
+            string loser = state.WinnerSeat == Me ? OpponentLabel : "Bạn";
             switch (state.EndReason)
             {
                 case MatchEndReason.BloodCoins: return loser + " đã nhận đủ 5 Xu Máu.";

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Máy chủ PvP độc lập, có thẩm quyền, cho THE LAST KING (DeadMansHand ver2).
+    Biên dịch TRỰC TIẾP các tệp dùng chung của dự án Unity (không sao chép):
+      - Assets/TheLastKing/Scripts/LastKingRules.cs  : bộ luật chính thức v1.1
+      - Assets/TheLastKing/Net/Protocol/*.cs         : giao thức nhị phân
+    Chỉ cần .NET 8 SDK để build, .NET 8 Runtime để chạy. Không dùng gói NuGet nào.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>LastKingServer</AssemblyName>
+    <RootNamespace>TheLastKing.Server</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <ServerGarbageCollector>false</ServerGarbageCollector>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="*.cs" />
+    <Compile Include="../Assets/TheLastKing/Scripts/LastKingRules.cs" Link="Shared/LastKingRules.cs" />
+    <Compile Include="../Assets/TheLastKing/Net/Protocol/*.cs" Link="Shared/Protocol/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

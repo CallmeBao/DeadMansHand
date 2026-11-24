@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    MÔ PHỎNG KEO DÁN UNITY: chạy NGUYÊN VĂN LastKingGameController (+ phần partial online) và LastKingOnlineUi
+    trên bộ stub UnityEngine có hành vi tối thiểu (cây GameObject, sự kiện nút, coroutine theo thời gian ảo),
+    kết nối tới MÁY CHỦ THẬT và đối thủ bot. Chỉ thay LastKingPhysics bằng bản giả (đặt xu tức thì).
+    Đây KHÔNG phải Unity: không kiểm hình ảnh, âm thanh, vật lý thật hay hiệu năng. Nhưng nó kiểm được trình tự
+    trạng thái, thứ tự sự kiện, nút bấm/đóng mở panel, mất mạng/nối lại và nhánh PvE sau khi vá controller.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>UnityGlueSim</AssemblyName>
+    <RootNamespace>TheLastKing.Sim</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <NoWarn>CS0618;CS0067;CS0649;CS0169;CS0414</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="*.cs" />
+    <Compile Include="../../Tools/UnityStubs/UnityEngine.Stub.cs" Link="Stub/UnityEngine.Stub.cs" />
+    <Compile Include="../../Assets/TheLastKing/Scripts/**/*.cs" Exclude="../../Assets/TheLastKing/Scripts/LastKingPhysics.cs;../../Assets/TheLastKing/Scripts/LastKingPhysicsChecks.cs" Link="Game/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="../../Assets/TheLastKing/Net/**/*.cs" Link="Net/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="../../Server/GameServer.cs" Link="Server/GameServer.cs" />
+    <Compile Include="../../Server/Room.cs" Link="Server/Room.cs" />
+    <Compile Include="../../Server/CertificateFactory.cs" Link="Server/CertificateFactory.cs" />
+    <Compile Include="../OnlineTests/Harness.cs" Link="Shared/Harness.cs" />
+    <Compile Include="../OnlineTests/Infra.cs" Link="Shared/Infra.cs" />
+  </ItemGroup>
+</Project>

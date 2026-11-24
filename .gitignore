@@ -28,3 +28,18 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# --- Online PvP (Server, Tests, Tools): chỉ bỏ qua đầu ra build. csproj của các thư mục này PHẢI được commit
+/Server/bin/
+/Server/obj/
+/Tests/**/bin/
+/Tests/**/obj/
+/Tools/**/bin/
+/Tools/**/obj/
+!/Server/*.csproj
+!/Tests/**/*.csproj
+!/Tools/**/*.csproj
+# Chứng chỉ TLS tự sinh của máy chủ chứa KHÓA RIÊNG: không commit
+*.pfx
+# Nhật ký trận sinh ra khi chạy máy chủ với --match-log (dữ liệu thử nghiệm, tự quyết định có commit hay không)
+/matches*.csv
